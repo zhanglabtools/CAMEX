@@ -1,4 +1,4 @@
-# STAMapper
+# CAMEX
 
 ## Overview
 Single-cell RNA-seq (scRNA-seq) data from multiple species present remarkable opportunities 

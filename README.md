@@ -29,11 +29,11 @@ CAMEX with other baseline methods, and can be downloaded from
 ### Environment
 
 It is recommended to use a Python version  `3.9`.
-* set up conda environment for STAMapper:
+* set up conda environment for CAMEX:
 ```
 conda create -n CAMEX python==3.9
 ```
-* install STAMapper from shell:
+* install CAMEX from shell:
 ```
 conda activate CAMEX
 ```

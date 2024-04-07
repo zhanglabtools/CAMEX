@@ -69,7 +69,7 @@ PARAMS = \
         'train': {
             'device': 'cuda:0',  # cpu or cuda
             'train_mode': 'mini_batch',
-            'dim_hidden': 16,
+            'dim_hidden': 128,
             'batch_size': 1024,
             'gnn_layer_num': 2,
             'epoch_pretrain': 10,

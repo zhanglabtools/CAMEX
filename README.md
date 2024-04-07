@@ -26,6 +26,16 @@ We collected several croo-species datasets which can be regarded as the benchmar
 CAMEX with other baseline methods, and can be downloaded from
 [here](https://drive.google.com/drive/folders/1rwdjEvWFEFw82a0x2JzMi2jXICbUc5eb?usp=sharing).
 
+Put the downloaded dataset into each file as follows:
+
+|- analysis
+
+|-- 1liver
+
+|--- dataset
+
+|---- *.h5ad
+
 ### Environment
 
 It is recommended to use a Python version  `3.9`.

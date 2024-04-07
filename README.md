@@ -22,7 +22,7 @@ at the single cell resolution.
 
 ### Data
 
-We collected several croo-species datasets which can be regarded as the benchmark to evaluate
+We collected several cross-species datasets which can be regarded as the benchmark to evaluate
 CAMEX with other baseline methods, and can be downloaded from
 [here](https://drive.google.com/drive/folders/1rwdjEvWFEFw82a0x2JzMi2jXICbUc5eb?usp=sharing).
 
@@ -35,6 +35,9 @@ Put the downloaded dataset into each file as follows:
 |--- dataset
 
 |---- *.h5ad
+
+In addition, We have provided the many-to-many homologous genes of several species. If you want to use the 
+homologous genes of other species, you can download them from the ensembl website [here](https://asia.ensembl.org/index.html).
 
 ### Environment
 

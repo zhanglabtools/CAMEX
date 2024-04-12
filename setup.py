@@ -11,7 +11,7 @@ setup(name='CAMEX',
       author='Zhen-Hao Guo',
       author_email='guozhenhao@tongji.edu.cn',
       url='www.xxx.com',
-      version='0.0.1',
+      version='0.0.2',
       packages=find_packages(),
       install_requires=REQUIRED,
       )

@@ -27,7 +27,7 @@ def evaluate(adata_raw, adata_int, method_name, batch_key='batch', label_key='ce
              ):
     """
     ref: https://github.com/theislab/scib-pipeline/blob/main/scripts/metrics/metrics.py
-    需要将算法的embedding存放在adata.obsm['X_emb']
+
     """
 
     if method_name in ['scanorama', 'harmony', 'pyliger', 'scvi', 'scanvi', 'scalex',
@@ -43,17 +43,17 @@ def evaluate(adata_raw, adata_int, method_name, batch_key='batch', label_key='ce
     else:
         raise NotImplementedError
     result = scib.me.metrics(
-        adata_raw,  # 未整合前的数据
-        adata_int,  # 整合后的数据
-        batch_key=batch_key,  # 批次的key
-        label_key=label_key,  # 细胞类型的key
-        type_=type_,  # 整合方法类型, either knn, full or embed
-        embed=embed,  # 整合后embedding的key
-        # cluster_key='leiden',  # 聚类标签的key
-        cluster_nmi=cluster_nmi,  # 计算各个resolution下nmi保存的文件
-        verbose=verbose,  # 是否显示
+        adata_raw,  #
+        adata_int,  #
+        batch_key=batch_key,  #
+        label_key=label_key,  #
+        type_=type_,  # , either knn, full or embed
+        embed=embed,  #
+        # cluster_key='leiden',  #
+        cluster_nmi=cluster_nmi,  #
+        verbose=verbose,  #
 
-        # 是否计算下列评价指标
+        #
         ari_=ari_,  # biological
         nmi_=nmi_,  # biological
         silhouette_=silhouette_,  # asw batch: batch, asw label: biological
@@ -61,9 +61,9 @@ def evaluate(adata_raw, adata_int, method_name, batch_key='batch', label_key='ce
         isolated_labels_f1_=isolated_labels_f1_,  # biological
         isolated_labels_asw_=isolated_labels_asw_,  # biological
         graph_conn_=graph_conn_,  # batch
-        kBET_=kBET_,  # batch，win下爆内存
-        clisi_=False,  # biological，32位程序不能用
-        ilisi_=False,  # batch，32位程序不能用
+        kBET_=kBET_,  # batch，
+        clisi_=False,  # biological，
+        ilisi_=False,  # batch，
 
         trajectory_=False,
         cell_cycle_=False,

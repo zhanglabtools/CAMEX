@@ -33,7 +33,7 @@ def subset_matches(df_match, left, right, union: bool = False):
         whether to take union of both sides of genes
     """
 
-    # TODO 后面还要改
+    # TODO
     cols = df_match.columns[: 2]
 
     c1, c2 = cols
@@ -47,7 +47,7 @@ def subset_matches(df_match, left, right, union: bool = False):
 
 def integrate_feature_gene(gene_map, deg_list, union: bool = False):
     """
-    # 输入1v1同源基因和每个dataset的deg
+    #
     :param gene_map: 同源基因
     :param args: hvg, deg or hvg+deg
     :param union: True or False
@@ -55,14 +55,14 @@ def integrate_feature_gene(gene_map, deg_list, union: bool = False):
     """
 
     # TODO
-    # 按照一定的顺序输入，或者判断dataset的名字和columns的名字
-    # 或者将所有1v1同源基因整合到一张表中
+    #
+    #
     temp = None
     cols = gene_map.columns
     for i in range(len(deg_list)):
-        if i == 0:  # i == 0时，新建DataFrame
+        if i == 0:  #
             temp = gene_map[cols[i]].isin(deg_list[i]).to_frame(cols[i])
-        else:  # 否则增加新的列
+        else:  #
             temp[cols[i]] = gene_map[cols[i]].isin(deg_list[i])
 
     keep = temp.max(1) if union else temp.min(1)  # 取交或并
@@ -72,9 +72,9 @@ def integrate_feature_gene(gene_map, deg_list, union: bool = False):
 def get_embedding(dataset_dict, hidden):
     for name, feature in hidden.items():
         if name[-4:] == 'cell':
-            dataset_dict[name[0: -4]].embedding['cell'] = feature.detach().to('cpu').numpy()  # 保存tensor会报错
+            dataset_dict[name[0: -4]].embedding['cell'] = feature.detach().to('cpu').numpy()  #
         elif name[-4:] == 'gene':
-            dataset_dict[name[0: -4]].embedding['gene'] = feature.detach().to('cpu').numpy()  # numpy不会
+            dataset_dict[name[0: -4]].embedding['gene'] = feature.detach().to('cpu').numpy()  #
         else:
             print('there must be sth. wrong!')
     return
@@ -189,8 +189,8 @@ def tensor_to_numpy(dict_in: dict):
 
 def cal_pred_with_unknown(y_prob: torch.tensor, unknown_num: int, threshold=0.5):
     """
-    拒绝预测概率小于threshold，并将其设为unknown，当threshold=0时，接受全部
-    当unknown为0时，可以使用如下代替
+
+
     y_predict_train = tensor_to_numpy({dataset_name: torch.max(label, -1)[1] * (torch.max(label, -1)[0] > 0.5) for
                                            dataset_name, label in y_predict_prob_train.items()})
     y_predict_test = tensor_to_numpy({dataset_name: torch.max(label, -1)[1] * (torch.max(label, -1)[0] > 0.5) for
@@ -210,7 +210,7 @@ def cal_pred_with_unknown(y_prob: torch.tensor, unknown_num: int, threshold=0.5)
 
 def get_acc(y_true: dict, y_predict: dict, r=4) -> dict:
     """
-    输入y_true, y_predict字典，k为数据集名，v为真实标签和预测标签，返回字典，k为数据集名，v为准确率
+
     :param y_true:
     :param y_predict:
     :param r:
@@ -222,11 +222,11 @@ def get_acc(y_true: dict, y_predict: dict, r=4) -> dict:
         correct = np.sum(y_true[dataset_name] == y_predict[dataset_name])
         acc = correct / len(y_true[dataset_name])
 
-        # # method 2 balanced_accuracy 导致和came结果不一致
+        # # method 2 balanced_accuracy
         # acc = round(balanced_accuracy_score(y_true[dataset_name], y_predict[dataset_name]), r)
 
         # acc_dict
-        acc_dict[dataset_name + '_acc'] = round(acc, r)  # 保留有效数字
+        acc_dict[dataset_name + '_acc'] = round(acc, r)  #
     return acc_dict
 
 
@@ -257,7 +257,7 @@ def get_ami(y_true, y_predict, suffix='_ami', r=4):
     ami_dict = {}
     for dataset_name, true_label in y_predict.items():
         ami = metrics.adjusted_mutual_info_score(y_true[dataset_name], y_predict[dataset_name])
-        ami_dict[dataset_name + suffix] = round(ami, r)  # 保留有效数字
+        ami_dict[dataset_name + suffix] = round(ami, r)  #
     return ami_dict
 
 # more metric ref: Learning interpretable cellular and gene signature embeddings from single-cell transcript data

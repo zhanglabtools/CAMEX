@@ -8,7 +8,7 @@
 # @IDE     : PyCharm
 
 """
-对结果的处理，主要包含绘图
+
 """
 
 import pandas as pd
@@ -57,13 +57,13 @@ def get_color(num: int, transparency=0.8):
         if num <= 19:
             return color_list[: num]
 
-        # 前10种颜色固定，超过10种随机产生
+        #
         elif num > 19:
             for i in range(19, num):
                 while True:
                     color_temp = f"rgba({np.random.randint(0, 255, 1)[0]}, {np.random.randint(0, 255, 1)[0]}, " \
                                  f"{np.random.randint(0, 255, 1)[0]}, {transparency})"
-                    # 重复则继续随机产生
+                    #
                     if color_temp not in color_list:
                         break
                 color_list.append(color_temp)
@@ -72,8 +72,8 @@ def get_color(num: int, transparency=0.8):
 
 def plot_sankey(cm_df, transparency=0.8):
     """
-    输入一个df的混淆矩阵，行为真实值，列为预测值
-    桑基图为从source（真实值）到target（预测值）
+
+
     :param transparency:
     :param cm_df:
     :return:
@@ -103,16 +103,16 @@ def plot_sankey(cm_df, transparency=0.8):
     color_node = color_list[: len(label_source)] + color_list[: len(label_target)]
 
     # paint args
-    # source到target的数量，与source和target一一对应，越大越粗
+    #
     link = dict(source=source, target=target, value=value, color=color_link)
-    # label的修饰，pad：每个label上下间距，thickness：左右间距
+    # label
     node = dict(label=label, pad=15, thickness=10, color=color_node, line=dict(color="black", width=0.5))
 
     # paint
     data = go.Sankey(link=link, node=node, arrangement="snap")  # plot
     fig = go.Figure(data)
-    fig.update_layout(width=500)  # 调整图片宽度，参考 https://github.com/plotly/plotly.py/issues/2324
-    # fig.write_image("./confluency_graph.png")     # 如何保存，参考 https://github.com/plotly/plotly.py/issues/3744
+    fig.update_layout(width=500)  #
+    # fig.write_image("./confluency_graph.png")     #
     return fig
 
 
@@ -138,10 +138,10 @@ def plot_pie(labels, values):
     """
     color_list = get_color(len(labels))
     fig = go.Figure(data=[go.Pie(labels=labels, values=values)])
-    # 一些参数
+    #
     fig.update_traces(hoverinfo='label+percent', textinfo='value', textfont_size=20,
                       marker=dict(colors=color_list, line=dict(color='#000000', width=2)))
-    # 画面宽度
+    #
     fig.update_layout(width=800)
     fig.show()
 
@@ -149,13 +149,13 @@ def plot_pie(labels, values):
 def plot_bar_sidle(y_data, x_data, top_y):
     """
     ref https://plotly.com/python/horizontal-bar-charts/
-    :param y_data: 横坐标标签,     y_data = ['huamn', 'mouse', 'monkey']
-    :param x_data: 横坐标标签所占的比例
+    :param y_data: ,     y_data = ['huamn', 'mouse', 'monkey']
+    :param x_data:
         x_data = [[21, 30, 21, 16, 12],
               [24, 31, 19, 15, 11],
               [27, 26, 23, 11, 13],
               [29, 24, 15, 18, 14]]
-    :param top_y: 每个比例对应的段标签    top_labels = ['a cell', 'b cell', 'c cell', 'd cell', 'long<br>cell']
+    :param top_y:     top_labels = ['a cell', 'b cell', 'c cell', 'd cell', 'long<br>cell']
     :return:
     """
     # 取颜色

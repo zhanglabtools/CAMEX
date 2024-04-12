@@ -97,7 +97,7 @@ class GAE(nn.Module):
 #
 #         # conv
 #         for i in range(1, self.layer_num + 1):
-#             h = {k: self.conv_norm[k[-4:]](v) for k, v in emb.items()}  # TODO cell gene 分开norm
+#             h = {k: self.conv_norm[k[-4:]](v) for k, v in emb.items()}  # TODO cell gene
 #             if self.share:
 #                 h = self.conv(graph, h)
 #             else:
@@ -233,8 +233,8 @@ class RGNNEncoder(nn.Module):
 
         # conv
         for i in range(1, self.layer_num + 1):
-            # h = {k: self.conv_norm[k[-4:]](v) for k, v in emb.items()}  # TODO cell gene 分开norm
-            h = {k: self.conv_norm(v) for k, v in h.items()}  # TODO cell gene 分开norm
+            # h = {k: self.conv_norm[k[-4:]](v) for k, v in emb.items()}  # TODO cell gene
+            h = {k: self.conv_norm(v) for k, v in h.items()}  # TODO cell gene
             if self.share:
                 h = self.conv(graph, h)
             else:
@@ -270,9 +270,9 @@ class RGNNEncoder(nn.Module):
 class RGATEncoder(nn.Module):
     def __init__(self, relation, dim_in, dim_hidden, layer_num, res=True, share=True):
         super().__init__()
-        # 实例化HeteroGraphConv，第一个参数mods，输入是一个字典，第二个参数aggregate是聚合函数的类型
-        # HeteroGraphConv实例化时self.mods = nn.ModuleDict(mods)，
-        self.relation = set(relation)  # 同一类型的边，参数共享
+        #
+        #
+        self.relation = set(relation)  #
         self.head_num = 4
         self.layer_num = layer_num
 
@@ -288,7 +288,7 @@ class RGATEncoder(nn.Module):
                           feat_drop=0.1) for src, rel, dst in relation}, aggregate='mean')  # 128 / 8 attn_drop
         self.convs = nn.ModuleList([HeteroGraphConv(
             {rel: GATConv(dim_hidden, int(dim_hidden / self.head_num), self.head_num, activation=nn.LeakyReLU(0.1),
-                          feat_drop=0.1) for src, rel, dst in relation}, aggregate='mean') for i in range(layer_num + 1)])      # TODO 毛刺变少
+                          feat_drop=0.1) for src, rel, dst in relation}, aggregate='mean') for i in range(layer_num + 1)])      # TODO
 
         self.bn1 = nn.LayerNorm(dim_hidden)
         self.dp1 = nn.Dropout(0.2)
@@ -303,14 +303,14 @@ class RGATEncoder(nn.Module):
         self.share = share
 
     def forward(self, graph, feature):
-        # emb + 1~2gnn +gat最好
+        # emb + 1~2gnn +gat
         # emb
         emb = {k: self.bn0(v) for k, v in feature.items()}
         emb = self.emb(graph, emb)  # TODO identity
         emb = {k: v.view(v.size(0), -1) for k, v in emb.items()}  # reshape
         h = {k: self.dp0(v) for k, v in emb.items()}
         temp = [emb]
-        # gnn，实际数+1。
+        # gnn，+1。
         for i in range(1, self.layer_num + 1):
             h = {k: self.bn1(v) for k, v in h.items()}
 
@@ -344,7 +344,7 @@ class DotDecoder(nn.Module):
         return neg_src.to(self.device), neg_dst.to(self.device)  # TODO device
 
     def construct_negative_graph(self, graph, k=1):
-        # 以1：1的比例创造负样本的图
+        #
         edge_type_list = list(graph.canonical_etypes)
         data_dict = {
             edge_type: self.construct_negative_edge(graph.edges(etype=edge_type), graph.num_nodes(edge_type[-1]), k=k)
@@ -577,12 +577,12 @@ class ReverseLayerF(Function):
 
 class MLPClassifier(nn.Module):
     """
-    参数少速度快，效果比GATClassifier差1-2%，没有attention的矩阵来可视化
+
     """
 
     def __init__(self, dim_hidden, dim_out):
         super(MLPClassifier, self).__init__()
-        # 共享参数，每个数据集有自己的mlp，数据集内的基因和节点共享mlp，效果最好
+        #
 
         self.fc0 = nn.Linear(dim_hidden, dim_hidden)
         self.ac0 = nn.LeakyReLU()
@@ -660,7 +660,7 @@ def target_distribution(q):
 #     """
 #     def __init__(self, dim_hidden, cluster_num_dict):
 #         super(ClusterClassifier, self).__init__()
-#         # 共享参数，每个数据集有自己的mlp，数据集内的基因和节点共享mlp，效果最好
+#         #
 #         from torch.nn.parameter import Parameter
 #         self.params_dict = nn.ParameterDict({name: Parameter(torch.Tensor(n_cluster, dim_hidden)) for name, n_cluster in cluster_num_dict.items()})
 #         # self.bn_dict = nn.ModuleDict({name: nn.BatchNorm1d(dim_hidden) for name, n_cluster in cluster_num_dict.items()})

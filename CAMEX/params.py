@@ -21,7 +21,7 @@ PARAMS = \
             'dataset_file': pd.DataFrame(
                 data=[['raw-kidney-human-Wu.h5ad', True, 'gene_matches_human2mouse.csv',
                        'raw-kidney-mouse-Adam.h5ad', False],
-                      # ['raw-kidney-human-Wu.h5ad', True, 'gene_matches_human2zebrafish.csv',  # 斑马鱼和人类没有共有的cell
+                      # ['raw-kidney-human-Wu.h5ad', True, 'gene_matches_human2zebrafish.csv',  #
                       #  'raw-kidney-zebrafish-Alemany.h5ad', False],
                       ],
                 columns=['source', 'source label', 'relationship', 'destination', 'destination label']),

@@ -17,12 +17,12 @@ from typing import Sequence, Optional, Callable
 
 def get_file_name(path='./', file_type='.h5ad'):
     """
-    输入路径，返回该路径下以file_type结尾的文件名
+
     :param path:
     :param file_type:
     :return:
     """
-    # 默认返回当前路径下的所有h5ad
+    #
     # read path
     all_file_name = os.listdir(path)
     file_name = []
@@ -34,7 +34,7 @@ def get_file_name(path='./', file_type='.h5ad'):
 
 def get_balanced_dataset(data_name_list, ref_name=None):
     """
-    输入数据集列表和ref名，将ref中不存在的细胞类型从query中移除
+
     :param data_name_list:
     :param ref_name:
     :return:
@@ -74,7 +74,7 @@ def preprocess(data):
 
 def get_counts_from_dataset(dataset, dataset_name):
     """
-    输入一个scanpy.Anndata和数据集名字，返回一个df，index是样本id，columns包含两个，一个是total_counts，一个是dataset_name
+
     :param dataset:
     :param dataset_name:
     :return:

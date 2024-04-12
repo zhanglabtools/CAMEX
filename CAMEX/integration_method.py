@@ -19,14 +19,14 @@ import numpy as np
 def pyliger_integrate(adata):
     """
     https://github.com/welch-lab/pyliger/blob/master/integrating_multi_scRNA_data.ipynb
-    pyliger需要做基因选择所以输入的是raw
+
     :param adata:
     :return:
     """
 
     import pyliger
 
-    # 输入concat后的adata
+    #
     adata = adata.copy()
     # pyliger requirement
     adata.obs.index.name = 'barcodes'
@@ -93,7 +93,7 @@ def scvi_integrate(adata_int):
 #     library(SeuratData)
 #     library(zellkonverter)
 #
-#     # 读取
+#     #
 #     print('load data')
 #     file_name <- read.table('adata_file.csv')[, 1]
 #     adata_list <- list()
@@ -104,7 +104,7 @@ def scvi_integrate(adata_int):
 #       adata_list[i] <- adata_temp
 #     }
 #
-#     # 预处理
+#     #
 #     print('preprocess')
 #     for (i in 1:length(adata_list)) {
 #       adata_list[[i]] <- NormalizeData(adata_list[[i]], verbose = FALSE)
@@ -112,7 +112,7 @@ def scvi_integrate(adata_int):
 #                                               verbose = FALSE)
 #     }
 #
-#     # 整合2，大规模数据时用pca
+#     #
 #     print('integrate')
 #     features <- SelectIntegrationFeatures(object.list = adata_list)
 #     for (i in 1:length(adata_list)) {
@@ -122,7 +122,7 @@ def scvi_integrate(adata_int):
 #     anchors <- FindIntegrationAnchors(object.list = adata_list, reduction = "rpca", dims = 1:50)
 #     integrated <- IntegrateData(anchorset = anchors, dims = 1:50)
 #
-#     # 保存
+#     #
 #     print('save')
 #     library(SeuratDisk)
 #     DefaultAssay(integrated) <- "integrated"
@@ -135,10 +135,10 @@ def scvi_integrate(adata_int):
 
 def integrate_prepare(adata_whole):
     """
-    一种特殊的hvg，在src.base中中已经产生adata_whole
-    1，mapping 1v1 gene到ref
-    2，各个数据集分别hvg
-    3，各个数据集取交
+
+    1，
+    2，
+    3，
     :param adata:
     :return:
     """
@@ -167,16 +167,16 @@ def integrate(adata_whole, method, batch_key='batch'):
     elif method == 'cell_pretrain_hidden':
         adata_hvg.obsm['X_emb'] = adata_hvg.obsm['cell_pretrain_hidden']
         adata_int = adata_hvg
-    elif method == 'scanorama':  # scanorama可以imputation也可以embedding
+    elif method == 'scanorama':  #
         # https://scanpy.readthedocs.io/en/stable/external.html
         sce.pp.scanorama_integrate(adata_hvg, key='batch')
-        adata_hvg.obsm['X_emb'] = adata_hvg.obsm['X_scanorama']  # 以scib为标准
+        adata_hvg.obsm['X_emb'] = adata_hvg.obsm['X_scanorama']  #
         adata_int = adata_hvg
     elif method == 'harmony':
         # https://scanpy.readthedocs.io/en/stable/external.html
         sc.tl.pca(adata_hvg)
         sce.pp.harmony_integrate(adata_hvg, key=batch_key)
-        adata_hvg.obsm['X_emb'] = adata_hvg.obsm['X_pca_harmony']  # 以scib为标准
+        adata_hvg.obsm['X_emb'] = adata_hvg.obsm['X_pca_harmony']  #
         adata_int = adata_hvg
     elif method == 'pyliger':
         # https://github.com/welch-lab/pyliger/blob/master/integrating_multi_scRNA_data.ipynb
@@ -192,7 +192,7 @@ def integrate(adata_whole, method, batch_key='batch'):
         adata_int = SCALEX(data_list, condition, min_features=1, min_cells=1, ignore_umap=True, max_iteration=30000)
         adata_int.obsm['X_emb'] = adata_int.obsm['latent']
     elif method == 'seurat':  # TODO
-        # 学习python对r的调用或者直接在r中run
+        #
         adata_int = seurat_integrate(adata_int)
     elif method == 'bbknn':  # not need
         # https://scanpy-tutorials.readthedocs.io/en/latest/integrating-data-using-ingest.html
@@ -215,7 +215,7 @@ def clear_fig(fig):
 
 
 def visualize(adata_int, method, batch_key='batch', cell_key='cell_ontology_class', subcell_key=None, legend_loc='right margin', dis=0.5):
-    # 选择算法，计算邻居
+    # ，
     if method in ['raw', 'combat']:
         sc.tl.pca(adata_int, n_comps=30)
         sc.pp.neighbors(adata_int, use_rep='X_pca')
@@ -223,7 +223,7 @@ def visualize(adata_int, method, batch_key='batch', cell_key='cell_ontology_clas
                     'cell_train_class', 'cell_train_hidden', 'cell_pretrain_hidden', 'cell_train_hidden_eval']:
         sc.pp.neighbors(adata_int, use_rep='X_emb', n_neighbors=15, metric='cosine')
     elif method in ['bbknn']:
-        pass  # bbknn修正了neighbors和connectivity
+        pass  #
     elif method in ['seurat']:
         pass
     else:
@@ -232,14 +232,14 @@ def visualize(adata_int, method, batch_key='batch', cell_key='cell_ontology_clas
     # leiden
     sc.tl.leiden(adata_int, resolution=0.5)
 
-    # 绘图准备
+    #
     sc.settings.set_figure_params(dpi=300, facecolor='white', dpi_save=300, figsize=(4, 4))
     # umap
     sc.tl.umap(adata_int, min_dist=dis)
 
     # # vis
     # fig_cell = sc.pl.umap(adata_int, color=[cell_key], return_fig=True, title='')
-    # # fig_cell = plot_scatter(adata_int, fig_cell)  # TODO 是否画点
+    # # fig_cell = plot_scatter(adata_int, fig_cell)  # TODO
     # fig_batch = sc.pl.umap(adata_int, color=[batch_key], return_fig=True, title='')
     # fig_leiden = sc.pl.umap(adata_int, color=['leiden'], return_fig=True, title='')
     # if subcell_key is None:
@@ -257,7 +257,7 @@ def visualize(adata_int, method, batch_key='batch', cell_key='cell_ontology_clas
 
     # vis
     fig_cell = sc.pl.umap(adata_int, color=[cell_key], return_fig=True, legend_loc=legend_loc, title='')
-    # fig_cell = plot_scatter(adata_int, fig_cell)  # TODO 是否画点
+    # fig_cell = plot_scatter(adata_int, fig_cell)  # TODO
     fig_batch = sc.pl.umap(adata_int, color=[batch_key], return_fig=True, legend_loc=legend_loc, title='')
     fig_leiden = sc.pl.umap(adata_int, color=['leiden'], return_fig=True, legend_loc=legend_loc, title='')
     if subcell_key is None:
@@ -281,23 +281,23 @@ def visualize(adata_int, method, batch_key='batch', cell_key='cell_ontology_clas
 
 def plot_scatter(adata, fig):
     """
-    无法确定折线图的每个顶点，所以绘制散点图
+
     :param adata:
     :param fig:
     :return:
     """
     batches = adata.obs.loc[:, 'batch'].unique()
     for batch in batches:
-        # 获取当前批次数据
+        #
         adata_temp = adata[adata.obs.loc[:, 'batch'] == batch, :]
-        # 当前批次的细胞类型
+        #
         cell_types = adata_temp.obs.loc[:, 'cell_ontology_class'].unique()
         umap_list = []
         for cell_type in cell_types:
             temp = adata_temp[adata_temp.obs.loc[:, 'cell_ontology_class'] == cell_type, :]
             umap = np.mean(temp.obsm['X_umap'], axis=0).tolist()
             umap_list.append(umap)
-        # 绘制折线图
+        #
         umap_array = np.array(umap_list)
         fig.axes[0].scatter(umap_array[:, 0], umap_array[:, 1], color='black', marker='o')
     return fig
@@ -315,9 +315,9 @@ def cal_diff(adata, emb='X_emb'):
     batches = adata.obs.loc[:, 'batch'].unique()
     cell_types = adata.obs.loc[:, 'cell_ontology_class'].unique()
     for cell_type in cell_types:
-        # 获取当前批次数据
+        #
         adata_temp = adata[adata.obs.loc[:, 'cell_ontology_class'] == cell_type, :]
-        # 当前批次的细胞类型
+        #
         umap_list = []
         embedding_list = []
         for batch in batches:
@@ -326,11 +326,11 @@ def cal_diff(adata, emb='X_emb'):
             umap_list.append(umap)
             embedding = np.mean(temp.obsm[emb], axis=0).tolist()    # TODO
             embedding_list.append(embedding)
-        # 绘制当前cell_type的corr
+        #
         umap_array = np.array(umap_list)
         embedding_array = np.array(embedding_list)
 
-        umap_corr = np.nan_to_num(np.corrcoef(umap_array))  # TODO umap用什么计算距离
+        umap_corr = np.nan_to_num(np.corrcoef(umap_array))  # TODO
         embedding_corr = np.nan_to_num(np.corrcoef(embedding_array))  # 去掉nan
 
         umap_corr_df = pd.DataFrame(data=umap_corr, columns=batches, index=batches)
@@ -340,7 +340,7 @@ def cal_diff(adata, emb='X_emb'):
         embedding_corr_dict[cell_type] = embedding_corr_df
 
     # mean
-    umap_corr_dict['mean'] = sum([data for data in umap_corr_dict.values()]) / len(umap_corr_dict)  # TODO 存在未知细胞类型时会出错
+    umap_corr_dict['mean'] = sum([data for data in umap_corr_dict.values()]) / len(umap_corr_dict)  # TODO
     embedding_corr_dict['mean'] = sum([data for data in embedding_corr_dict.values()]) / len(embedding_corr_dict)
 
     return embedding_corr_dict

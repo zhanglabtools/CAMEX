@@ -18,14 +18,14 @@ from CAMEX.annotation_metrics import evaluate_all
 
 
 """
-输入：表达谱+数字标签
-输出：预测标签
+：+
+：
 """
 
 
 def cal_came2(adata, method):
     """
-    adata.uns['cell_type']记录了细胞类型和对应的int，其它算法有自己的对应法则
+
     :param adata:
     :param method:
     :return:
@@ -40,7 +40,7 @@ def cal_came2(adata, method):
     cell_class_temp = adata.obs.loc[:, ['cell_class', 'cell_class_num']].to_numpy()
     cell_class_dict = {item[1]: item[0] for item in cell_class_temp}
     if 'unknown' not in cell_class_dict.values():
-        cell_class_dict[len(cell_class_dict)] = 'unknown'  # 可能没有
+        cell_class_dict[len(cell_class_dict)] = 'unknown'  #
 
     # evaluate
     results = pd.DataFrame()
@@ -48,22 +48,22 @@ def cal_came2(adata, method):
     confusion_matrix_raw = {}
     adata_list = []
     for i, dataset_name in enumerate(batch):
-        # 获取对应的数据集
+        #
         adata_temp = adata[adata.obs.loc[:, 'batch'] == batch[i], :]
 
-        # 真实标签
+        #
         y_ontology = adata_temp.obs['cell_ontology_class_num'].to_numpy()
 
-        # 获得y_true, y_pred, y_prob
+        # , y_pred, y_prob
         y_true = adata_temp.obs['cell_class_num'].to_numpy()
         y_prob = nn.Softmax(dim=-1)(torch.tensor(adata_temp.obsm['cell_train_class'])).numpy()  # CE自带SF，现在添加
         y_pred = np.argmax(y_prob, axis=-1)
-        # 保存y_pred
+        #
         adata_temp.obs.loc[:, 'pred'] = y_pred
         adata_temp.obs.loc[:, 'pred_name'] = adata_temp.obs.loc[:, 'pred'].map(cell_class_dict)
         adata_list.append(adata_temp)
 
-        # 增加一个对角阵
+        #
         y_ontology = np.concatenate([y_ontology, np.arange(y_prob.shape[1], dtype=np.int32)])
         y_true = np.concatenate([y_true, np.arange(y_prob.shape[1], dtype=np.int32)])
         y_prob = np.concatenate([y_prob, np.eye(y_prob.shape[1], dtype=np.float32)])
@@ -105,19 +105,19 @@ def evaluate_cellblast(model, adata_test):
     for i, _hits in enumerate(model.hits):
         hits = ref_cell_type[_hits]
 
-        # 判断最低邻居数量要求
+        #
         if hits.size <= 1:
-            hits = np.array(cell_type)  # 返回平均数
+            hits = np.array(cell_type)  #
 
-        label, count = np.unique(hits, return_counts=True)  # 返回邻居的类型和个数
+        label, count = np.unique(hits, return_counts=True)  #
         best_idx = count.argmax()
         if count[best_idx] / hits.size <= 0.2:
-            # 如果邻居投票数小于阈值，则分为unknown
+            # ，
             vote_matrix.loc[vote_matrix.index[i], len(cell_type)-1] = 1
             prob_matrix.loc[prob_matrix.index[i], len(cell_type)-1] = 1
             continue
         else:
-            # 否则分配count
+            #
             for j, item in enumerate(label):
                 vote_matrix.loc[vote_matrix.index[i], item] = count[j]
                 prob_matrix.loc[prob_matrix.index[i], item] = count[j] / sum(count)
@@ -143,19 +143,19 @@ def anno_prob(model,
     # 填补
     for i, _hits in enumerate(model.hits):
         hits = ref_cell_type[_hits.astype(int)]
-        # 判断最低邻居数量要求
+        #
         if hits.size < min_hits:
-            hits = np.array(cell_type)  # 返回平均数
-        # 返回邻居的类型和个数
+            hits = np.array(cell_type)  #
+        #
         label, count = np.unique(hits, return_counts=True)
         best_idx = count.argmax()
         if count[best_idx] / hits.size <= majority_threshold:
-            # 如果邻居投票数小于阈值，则分为unknown
+            #
             vote_matrix.loc[vote_matrix.index[i], len(cell_type) - 1] = 1
             prob_matrix.loc[prob_matrix.index[i], len(cell_type) - 1] = 1
             continue
         else:
-            # 否则分配count
+            #
             for j, item in enumerate(label):
                 vote_matrix.loc[vote_matrix.index[i], item] = count[j]
                 prob_matrix.loc[prob_matrix.index[i], item] = count[j] / sum(count)
@@ -176,7 +176,7 @@ def cal_cellblast(adata, method):
     cell_class_temp = adata.obs.loc[:, ['cell_class', 'cell_class_num']].to_numpy()
     cell_class_dict = {item[1]: item[0] for item in cell_class_temp}
     if 'unknown' not in cell_class_dict.values():
-        cell_class_dict[len(cell_class_dict)] = 'unknown'  # 可能没有
+        cell_class_dict[len(cell_class_dict)] = 'unknown'  #
 
     # split adata into train and test
     batch = adata.obs.loc[:, 'batch'].unique().to_numpy()
@@ -203,7 +203,7 @@ def cal_cellblast(adata, method):
     cell_class_temp = adata.obs.loc[:, ['cell_class', 'cell_class_num']].to_numpy()
     cell_class_dict = {item[1]: item[0] for item in cell_class_temp}
     if 'unknown' not in cell_class_dict.values():
-        cell_class_dict[len(cell_class_dict)] = 'unknown'  # 可能没有
+        cell_class_dict[len(cell_class_dict)] = 'unknown'  #
 
     # predict
     adata_list = []
@@ -223,7 +223,7 @@ def cal_cellblast(adata, method):
         # vote
         hits = hits.reconcile_models().filter(by="pval", cutoff=0.05)
         # official predict
-        official_predictions = hits.annotate("cell_class")  # TODO 获取ref标签
+        official_predictions = hits.annotate("cell_class")  # TODO
         # my predict
         vote_matrix, prob_matrix = anno_prob(hits, adata_temp)
         y_true = adata_temp.obs.loc[:, 'cell_class_num'].to_numpy()
@@ -232,13 +232,13 @@ def cal_cellblast(adata, method):
 
         # save
         adata_temp.obs.loc[:, 'pred'] = y_pred
-        adata_temp.obs.loc[:, 'pred_name'] = adata_temp.obs.loc[:, 'pred'].map(cell_class_dict)  # 和official_完全一样
+        adata_temp.obs.loc[:, 'pred_name'] = adata_temp.obs.loc[:, 'pred'].map(cell_class_dict)  #
         adata_list.append(adata_temp)
 
-        # 真实标签
+        #
         y_ontology = adata_temp.obs['cell_ontology_class_num'].to_numpy()
 
-        # 增加一个对角阵
+        #
         y_ontology = np.concatenate([y_ontology, np.arange(y_prob.shape[1], dtype=np.int32)])
         y_true = np.concatenate([y_true, np.arange(y_prob.shape[1], dtype=np.int32)])
         y_prob = np.concatenate([y_prob, np.eye(y_prob.shape[1], dtype=np.float32)])
@@ -272,7 +272,7 @@ def cal_singlecellnet(adata, method):
     cell_class_temp = adata.obs.loc[:, ['cell_class', 'cell_class_num']].to_numpy()
     cell_class_dict = {item[1]: item[0] for item in cell_class_temp}
     if 'unknown' not in cell_class_dict.values():
-        cell_class_dict[len(cell_class_dict)] = 'unknown'  # 可能没有
+        cell_class_dict[len(cell_class_dict)] = 'unknown'  #
 
     import pySingleCellNet as pySCN
     # split to train and test
@@ -303,7 +303,7 @@ def cal_singlecellnet(adata, method):
         adata_temp.obs.loc[:, 'pred_name'] = adata_temp.obs.loc[:, 'pred'].map(cell_class_dict)
         y_ontology = adata_temp.obs['cell_class_num']
 
-        # 增加一个对角阵
+        #
         y_ontology = np.concatenate([y_ontology, np.arange(y_prob.shape[1], dtype=np.int32)])
         y_true = np.concatenate([y_true, np.arange(y_prob.shape[1], dtype=np.int32)])
         y_prob = np.concatenate([y_prob, np.eye(y_prob.shape[1], dtype=np.float32)])
@@ -340,18 +340,18 @@ def cal_scvi(adata, method):
     cell_class_temp = adata.obs.loc[:, ['cell_class', 'cell_class_num']].to_numpy()
     cell_class_dict = {item[1]: item[0] for item in cell_class_temp}
     if 'unknown' not in cell_class_dict.values():
-        cell_class_dict[len(cell_class_dict)] = 'unknown'  # 可能没有
+        cell_class_dict[len(cell_class_dict)] = 'unknown'  #
 
     import scvi
     # device
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
-    # 新建一列，将query的细胞类型转换为unknown
+    # ，
     batch = adata.obs.loc[:, 'batch'].unique().to_numpy()
     adata_train = adata[adata.obs.loc[:, 'batch'] == batch[0], :]
     adata_train.obs.loc[:, 'scvi_cell_type'] = adata_train.obs.loc[:, 'cell_class_num'].astype(str)
     adata_test_list = []
-    # 除了第一个adata为train，其余的为ref，其余的scvi_cell_type设为unknown
+    # ，，
     for i in range(1, len(batch)):
         adata_temp = adata[adata.obs.loc[:, 'batch'] == batch[i], :]
         adata_temp.obs.loc[:, 'scvi_cell_type'] = 'unknown'
@@ -382,7 +382,7 @@ def cal_scvi(adata, method):
     results = pd.DataFrame()
     confusion_matrix_unify = {}
     confusion_matrix_raw = {}
-    for dataset_name in batch:  # 从1开始不要评估train
+    for dataset_name in batch:  #
         adata_temp = adata[adata.obs.loc[:, 'batch'] == dataset_name]
         # adata_list.append(adata_temp)
         # my predict
@@ -394,10 +394,10 @@ def cal_scvi(adata, method):
         adata_temp.obs.loc[:, 'pred'] = y_pred
         adata_temp.obs.loc[:, 'pred_name'] = adata_temp.obs.loc[:, 'pred'].map(cell_class_dict)
 
-        # 真实标签
+        #
         y_ontology = adata_temp.obs['cell_ontology_class_num'].to_numpy()
 
-        # 增加一个对角阵
+        #
         y_ontology = np.concatenate([y_ontology, np.arange(y_prob.shape[1], dtype=np.int32)])
         y_true = np.concatenate([y_true, np.arange(y_prob.shape[1], dtype=np.int32)])
         y_prob = np.concatenate([y_prob, np.eye(y_prob.shape[1], dtype=np.float32)])
@@ -425,7 +425,7 @@ def cal_scvi(adata, method):
 
 def cal_itclust(adata, method):
     import ItClust as ic
-    # 细胞类型的columns为celltype
+    #
     adata.obs.loc[:, 'celltype'] = adata.obs.loc[:, 'cell_ontology_class']
 
     # split adata into train and test
@@ -435,15 +435,15 @@ def cal_itclust(adata, method):
     for i in range(len(batch)):
         adata_test_dict[batch[i]] = adata[adata.obs.loc[:, 'batch'] == batch[i], :]
 
-    # train，训练集训练，全部数据测试
+    # train，，
     clf = ic.transfer_learning_clf()
     clf.fit(adata_train, adata, pretrain_epochs=100, maxiter=100)
     pred, prob, cell_type_pred = clf.predict()
-    # 设置unknown类
+    #
     prob['unknown'] = 0
 
     # test
-    # TODO 细胞类型，ItClust没有设计unknown的类，cell_type_pred只能预测训练集中的类别
+    # TODO ，，
     cell_type_dict = {v[0]: int(k) for k, v in cell_type_pred.items()}
     cell_type_dict['unknown'] = len(cell_type_dict)
     results = pd.DataFrame()
@@ -451,9 +451,9 @@ def cal_itclust(adata, method):
     for name, data in adata_test_dict.items():
         y_true = data.obs.loc[:, 'cell_ontology_class'].apply(
             lambda x: cell_type_dict[x] if x in cell_type_dict.keys() else cell_type_dict['unknown']).to_numpy()
-        # 为每个类别增加一个对角阵
+        #
         y_true = np.concatenate([y_true, np.arange(0, len(cell_type_dict))])
-        # 对y_prob切片，多了一个-target
+        # target
         prob_temp = prob.loc[data.obs.index + '-target', :]
         y_pred_prob = prob_temp.to_numpy()
         y_pred_prob = np.concatenate([y_pred_prob, np.eye(len(cell_type_dict))])
@@ -464,7 +464,7 @@ def cal_itclust(adata, method):
         results = pd.concat([results, result], axis=1)
         confusion_matrix_dict[name] = cm
 
-    # save embedding，test是全部的数据
+    # save embedding，
     clf.adata_test.obsm['X_emb'] = clf.adata_test.obsm['X_Embeded_zisy_trans_True']
 
     adata = clf.adata_test
@@ -479,7 +479,7 @@ def run_seurat():
     library(Seurat)
     library(SeuratDisk)
     library(zellkonverter)
-    # 读取
+    # 
     print('load data')
     file_name <- read.table('adata_file.csv')[, 1]
     adata_list <- list()
@@ -490,7 +490,7 @@ def run_seurat():
       adata_list[i] <- adata_temp
     }
 
-    # 预处理
+    # 
     print('preprocess')
     for (i in 1:length(adata_list)) {
       adata_list[[i]] <- NormalizeData(adata_list[[i]], verbose = FALSE)
@@ -504,20 +504,20 @@ def run_seurat():
     ref <- adata_list[[1]]
     query_list <- adata_list[1: length(adata_list)]
 
-    # 细胞分类
+    # 
     for (i in 1:length(query_list)) {
       anchors <- FindTransferAnchors(reference = ref, query = query_list[[i]],
                                      dims = 1:30, reference.reduction = "pca")
-      # 预测
+      # 
       predictions <- TransferData(anchorset = anchors, refdata = ref$cell_ontology_class,
                                   dims = 1:30)
-      # 把预测值整合到query中
+      # 
       query_list[[i]] <- AddMetaData(query_list[[i]], metadata = predictions)
-      # 看看哪些预测准确
+      # 
       query_list[[i]]$prediction.match <- query_list[[i]]$predicted.id == query_list[[i]]$cell_ontology_class
       table(query_list[[i]]$prediction.match)
       table(query_list[[i]]$predicted.id)
-      # 保存数据为h5ad
+      # 
       library(SeuratDisk)
       SaveH5Seurat(query_list[[i]], filename = paste('seurat_annotation_',strsplit(file_name[i], '.', fixed = T)[[1]][1],'.h5Seurat',sep = ""),overwrite = TRUE)
       Convert(paste('seurat_annotation_',strsplit(file_name[i], '.', fixed = T)[[1]][1],'.h5Seurat',sep = ""), dest = "h5ad",overwrite = TRUE)
@@ -544,7 +544,7 @@ def cal_seurat(adata, method):
         adata_temp.obs['cell_ontology_backup'] = adata_temp.obs['cell_ontology_class']
         adata_temp.write_h5ad('./' + name + '.h5ad')
 
-    # # run seurat TODO 报错待维护，暂时用rstudio跑seurat
+    # # run seurat TODO
     # run_seurat()
 
     # load seurat file, evaluate and save result
@@ -559,12 +559,12 @@ def cal_seurat(adata, method):
         adata_temp = sc.read_h5ad('seurat_annotation_' + name + '.h5ad')
         # adata_temp ontology class
         adata_temp.obs['cell_ontology_class'] = adata[adata_temp.obs.index,].obs['cell_ontology_class']
-        # 细胞类型和字典，columns就是train的细胞类型
-        cell_type = adata_temp.obs.columns[-2 - cell_type_num:-2].tolist()  # 去掉倒数前两列
+        # ，
+        cell_type = adata_temp.obs.columns[-2 - cell_type_num:-2].tolist()  #
         cell_type = [' '.join(item.split('.')[2:]) for item in cell_type]
         cell_type_dict = {cell_type[i]: i for i in range(len(cell_type))}
         cell_type_dict['unknown'] = len(cell_type_dict)
-        # TODO test中有些未出现在train
+        # TODO
         y_true = adata_temp.obs['cell_ontology_class'].apply(
             lambda x: cell_type_dict[x] if x in cell_type_dict.keys() else cell_type_dict['unknown']).to_numpy()
         y_true = np.concatenate([y_true, np.arange(0, len(cell_type_dict))])
@@ -580,7 +580,7 @@ def cal_seurat(adata, method):
         confusion_matrix_dict[name] = cm
         adata_list.append(adata_temp)
 
-    # embedding，seurat用X_pca展示
+    # embedding，
     adata = sc.concat(adata_list)
     sc.tl.pca(adata)
     adata.obsm['X_emb'] = adata.obsm['X_pca']

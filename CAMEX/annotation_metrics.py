@@ -32,7 +32,7 @@ def get_cm(y_true, y_pred):
     https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html
     https://scikit-learn.org/stable/modules/generated/sklearn.metrics.ConfusionMatrixDisplay.html
     https://blog.csdn.net/SartinL/article/details/105844832
-    行为真实标签，列为预测标签
+
     :param y_true:
     :param y_pred:
     :return: cm
@@ -197,11 +197,11 @@ def evaluate_all(y_true, y_prob, y_pred, y_ontology, cell_ontology_dict, cell_cl
 
     cell_ontology_list = [cell_ontology_dict[i] for i in range(len(cell_ontology_dict))]
     cell_class_list = [cell_class_dict[i] for i in range(len(cell_class_dict))]
-    # 计算混淆矩阵cm
-    # 1 标准化的cm
+    #
+    # 1
     cm_unify = get_cm(np.concatenate([y_true, np.arange(len(cell_class_dict))]),
                       np.concatenate([y_pred, np.arange(len(cell_class_dict))]))  # y_true为标准化到train的标签
-    # 主对角线减1
+    #
     for i, item in enumerate(cm_unify):
         item[i] -= 1
     # df
@@ -215,18 +215,18 @@ def evaluate_all(y_true, y_prob, y_pred, y_ontology, cell_ontology_dict, cell_cl
     # plt.show()
     del ax
 
-    # 2 未标准化的cm，通过y_ontology和y_pred计算，使用对角阵填充
+    # 2
     cm_raw = get_cm(
         np.concatenate([y_ontology, np.arange(len(cell_ontology_dict))]),
         np.concatenate([y_pred, np.arange(len(cell_ontology_dict))]))  # y_true为真实值
-    # 主对角线减1
+    #
     for i, item in enumerate(cm_raw):
         item[i] -= 1
     cm_raw_df = pd.DataFrame(cm_raw, index=cell_ontology_list, columns=cell_ontology_list)
-    # 行是source，列是target，去掉和为0的行（没有这些细胞类型），去掉unknown以后的列（不会被预测到）
-    # 去掉行
+    #
+    #
     cm_raw_df = cm_raw_df.loc[cm_raw_df.sum(axis=0) != 0, :]
-    # 去掉列
+    #
     cm_raw_df = cm_raw_df.loc[:, :'unknown']
     # plot
     # ax = sns.heatmap(cm_raw_df, fmt="d", linewidths=0.2, cmap="YlGnBu_r", cbar=False, annot=True)
@@ -238,17 +238,17 @@ def evaluate_all(y_true, y_prob, y_pred, y_ontology, cell_ontology_dict, cell_cl
     # plt.show()
     del ax
 
-    # # plot sanky 绘制桑基图，由混淆矩阵绘制桑基图
+    # # plot sanky
     # # unify
     # fig = plot_sankey(cm_unify_df)
     # # fig.show()
     # fig.write_image(f'./annotation_results/{method}_{dataset_name}_sanky_unify.png', width=600, height=800, scale=5)
     # # raw
-    # fig = plot_sankey(cm_raw_df)    # 全部的忽略
+    # fig = plot_sankey(cm_raw_df)    #
     # # fig.show()
     # fig.write_image(f'./annotation_results/{method}_{dataset_name}_sanky_raw.png', width=600, height=800, scale=5)
     # # metrics
-    # # test中有些未出现在train，无法计算auroc，aupr，为y_true，y_pred，y_pred_prob加一个对角阵
+    # #
     # y_true = np.concatenate([y_true, np.arange(0, len(cell_class_dict))])
     # y_prob = np.concatenate([y_prob, np.eye(len(cell_class_dict))])
     # y_pred = np.argmax(y_prob, axis=-1)
@@ -262,14 +262,14 @@ def evaluate_all(y_true, y_prob, y_pred, y_ontology, cell_ontology_dict, cell_cl
 if __name__ == '__main__':
     pass
     # """
-    # 由于unknown的存在，某些指标无法计算，所以把unknown那一列去掉
+    #
     # """
     # x = np.array([[1, 3], [2, 6]])
     # x = x / x.sum(axis=1, keepdims=1)
     # print()
     #
     # # example
-    # # 混淆矩阵，行是y_true，列是y_pred
+    # #
     # y_true = [0, 1, 2, 1]
     # y_pred = [0, 1, 2, 2]
     # y_prob = [[1, 0, 0],

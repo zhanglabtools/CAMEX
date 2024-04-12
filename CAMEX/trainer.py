@@ -57,8 +57,8 @@ class Trainer(object):
         self._generate_loss_func()
 
         # log
-        self.epoch_current_pretrain = 0
-        self.log_pretrain = {'best_epoch': 0,  'best_hidden': {},  'evaluation': pd.DataFrame(),
+        self.epoch_current_integration = 0
+        self.log_integration = {'best_epoch': 0,  'best_hidden': {},  'evaluation': pd.DataFrame(),
                              'best_model_params': []}
         self.epoch_current_train = 0
         self.log_train = {'best_train_acc': 0, 'best_test_acc': 0, 'best_epoch': 0,  'best_class': {},
@@ -108,7 +108,7 @@ class Trainer(object):
         self.model.reset_parameters()
 
     def _generate_optimizer(self):
-        # dot无参数，只优化encoder
+        #
         self.optimizer_model = torch.optim.Adam(self.model.parameters(), weight_decay=0.001)
         self.optimizer_domain = torch.optim.Adam(self.domain.parameters(), weight_decay=0.001)
         self.optimizer_generator = torch.optim.Adam([{'params': self.encoder.parameters(), 'lr': 1e-3},
@@ -129,8 +129,8 @@ class Trainer(object):
         self.loss_cluster = torch.nn.CrossEntropyLoss(label_smoothing=0.1)
         self.loss_mlp = torch.nn.MSELoss()
 
-    def _batch_pretrain(self, graph, device, step='d'):
-        # 释放显存
+    def _batch_integration(self, graph, device, step='d'):
+        #
         # to device
         self.model.to(device)
         # self.model.to_device(device)
@@ -222,7 +222,7 @@ class Trainer(object):
         #     self.optimizer_cluster.step()
 
         # if self.params['cluster'] and self.epoch_current_pretrain >= 10:
-        #     # 设置类中心
+        #     #
         #     if self.epoch_current_pretrain == 10:
         #         from torch.nn.parameter import Parameter
         #         self.model.cluster_classifier.params_dict = nn.ParameterDict({name: Parameter(torch.Tensor(centers).to(device))
@@ -243,8 +243,8 @@ class Trainer(object):
 
         return loss_total
 
-    def _batch_train(self, graph, device, step='d'):
-        # 释放显存
+    def _batch_annotation(self, graph, device, step='d'):
+        #
         # torch.cuda.empty_cache()
         # to device
         self.model.to(device)
@@ -282,7 +282,7 @@ class Trainer(object):
         # zero_grad
         # self.optimizer_classifier.zero_grad()
         self.optimizer_classifier.zero_grad()
-        # 数据集类型，标记哪些训练
+        #
         data_ref = [name for name, ty in self.dgl_data.data_type.items() if ty == 'reference']
 
         # encode
@@ -306,39 +306,39 @@ class Trainer(object):
         loss = loss.item()
         return loss
 
-    def pretrain(self):
+    def integration(self):
         self._generate_model()
         self._generate_optimizer()
-        print('--------------------------------------------- pretrain ---------------------------------------------')
+        print('--------------------------------------------- integration ---------------------------------------------')
         device = self.params['device']
-        n_epoch = self.params['epoch_pretrain']
+        n_epoch = self.params['epoch_integration']
 
         for epoch in range(n_epoch):
-            # 当前epoch
-            self.epoch_current_pretrain = epoch
+            #
+            self.epoch_current_integration = epoch
             # train
             self.model.train()
             loss_sum = 0
 
             # if epoch >= 5:
-            #     # TODO 软聚类
+            #     #
             #     self.clustering()
 
-            # full_batch，整图回传优化一次
+            # full_batch，
             if self.train_mode == 'full_batch':
                 # batch == epoch
                 if epoch >= 20 and self.params['domain']:
-                    loss = self._batch_pretrain(self.dgl_data.graph, device, step='d')
-                loss = self._batch_pretrain(self.dgl_data.graph, device, step='g')
+                    loss = self._batch_integration(self.dgl_data.graph, device, step='d')
+                loss = self._batch_integration(self.dgl_data.graph, device, step='g')
                 loss_sum = loss
 
-            # mini_batch，每个批次回传优化
+            # mini_batch
             elif self.train_mode == 'mini_batch':
                 # sampler
-                sampler_list = [3]  # TODO 超参数
-                # sampler_list = [5] * (1 + self.params['gnn_layer_num'] + 1)     # 每层只取5个邻居
+                sampler_list = [3]  # TODO
+                # sampler_list = [5] * (1 + self.params['gnn_layer_num'] + 1)     #
                 sampler = dgl.dataloading.ShaDowKHopSampler(sampler_list)
-                # train_nids是全部的，loss时做选择
+                #
                 train_nids = self.dgl_data.graph.ndata['index']
                 # dataloader
                 dataloader = dgl.dataloading.NodeDataLoader(self.dgl_data.graph,
@@ -353,33 +353,33 @@ class Trainer(object):
                     alpha = 2. / (1. + np.exp(-10 * p)) - 1
                     # train
                     if epoch >= 5 and self.params['domain']:
-                        loss = self._batch_pretrain(block, device, step='d')
-                    loss = self._batch_pretrain(block, device, step='g')
+                        loss = self._batch_integration(block, device, step='d')
+                    loss = self._batch_integration(block, device, step='g')
                     loss_sum += loss
                 loss_sum = loss_sum / len(dataloader)
 
-            print(f'epoch: {self.epoch_current_pretrain}, loss: {loss_sum}')
+            print(f'epoch: {self.epoch_current_integration}, loss: {loss_sum}')
 
-            # eval
-            self._evaluation_pretrain(loss_sum)
-            self.adata_whole.obsm['cell_pretrain_hidden'] = np.concatenate(
-                [self.log_pretrain['best_hidden'][name + 'cell'] for name in self.adata_whole.uns['data_order']])
+        # eval
+        self._evaluation_integration(loss_sum)
+        self.adata_whole.obsm['X_CAMEX_Integration'] = np.concatenate(
+            [self.log_integration['best_hidden'][name + 'cell'] for name in self.adata_whole.uns['data_order']])
 
         # save
-        self._store_pretrain()
+        self._store_integration()
 
-    def train(self):
+    def annotation(self):
         self._generate_model()
         self._generate_optimizer()
-        print('--------------------------------------------- train ---------------------------------------------')
+        print('--------------------------------------------- annotation ---------------------------------------------')
         # train
         device = self.params['device']
-        n_epoch = self.params['epoch_train']
+        n_epoch = self.params['epoch_annotation']
 
         for epoch in range(n_epoch):
             # # TODO test
             # self.get_feature_importance()
-            # model先放入cuda，data可能一次放不下，分full_batch和mini_batch
+            #
             self.model.to(device)
             # 当前epoch
             self.epoch_current_train = epoch
@@ -388,21 +388,21 @@ class Trainer(object):
             # loss_sum
             loss_sum = 0
 
-            # full_batch，整图回传优化一次
+            # full_batch
             if self.train_mode == 'full_batch':
-                loss = self._batch_train(self.dgl_data.graph, device, step='g')
+                loss = self._batch_annotation(self.dgl_data.graph, device, step='g')
                 loss_sum += loss
 
-            # mini_batch，每个批次回传优化
+            # mini_batch
             elif self.train_mode == 'mini_batch':
                 # sampler
-                sampler_list = [3]  # TODO 超参数，和邻居的距离有关
-                # sampler_list = [5] * (1 + self.params['gnn_layer_num'] + 1)     # 每层只取5个邻居
+                sampler_list = [3]  # TODO
+                # sampler_list = [5] * (1 + self.params['gnn_layer_num'] + 1)     #
                 sampler = dgl.dataloading.ShaDowKHopSampler(sampler_list)
-                # train_nids是全部的，loss时做选择
+                # t
                 data_ref = [name for name, ty in self.dgl_data.data_type.items() if ty == 'reference']
                 train_nids = self.dgl_data.graph.ndata['index']
-                # train_nids = {item + 'cell': train_nids[item + 'cell'] for item in data_ref}    # TODO 节约时间
+                # train_nids = {item + 'cell': train_nids[item + 'cell'] for item in data_ref}    # TODO
                 if len(train_nids) == 0:
                     print('the num of ref is 0!')
                     raise NotImplementedError
@@ -415,7 +415,7 @@ class Trainer(object):
                                                             drop_last=True)
                 loss_sum = 0
                 for batch_num, (input_nodes, output_nodes, block) in enumerate(dataloader):
-                    loss = self._batch_train(block, device)
+                    loss = self._batch_annotation(block, device)
                     loss_sum += loss
 
                 loss_sum = loss_sum
@@ -428,12 +428,12 @@ class Trainer(object):
             if self.epoch_current_train - self.log_train['best_epoch'] > int(n_epoch / 10):
             # if self.epoch_current_train - self.log_train['best_epoch'] > 5:
                 self.model.load_state_dict(self.log_train['best_model_params'])  # load model params
-                self.log_train['best_epoch'] = self.epoch_current_train  # 当前epoch
+                self.log_train['best_epoch'] = self.epoch_current_train  #
 
         # save
         self._store_train()
 
-    def _evaluation_pretrain(self, loss_sum):
+    def _evaluation_integration(self, loss_sum):
         """
         评估时不需要model.eval
         :return:
@@ -447,7 +447,7 @@ class Trainer(object):
             del graph_temp
 
         # if self.epoch_current_pretrain == 0 and self.epoch_current_pretrain % 2 == 0:   # TODO
-        if self.params['cluster'] and self.epoch_current_pretrain == self.cluster_epoch:   # TODO
+        if self.params['cluster'] and self.epoch_current_integration == self.cluster_epoch:   # TODO
             print('clustering...')
             self.clustering(hidden)
 
@@ -455,16 +455,16 @@ class Trainer(object):
 
         # loss
         evaluation_dict = {'loss': loss_sum}
-        evaluation = pd.DataFrame(evaluation_dict, index=[self.epoch_current_pretrain])
-        self.log_pretrain['evaluation'] = pd.concat([self.log_pretrain['evaluation'], evaluation])
+        evaluation = pd.DataFrame(evaluation_dict, index=[self.epoch_current_integration])
+        self.log_integration['evaluation'] = pd.concat([self.log_integration['evaluation'], evaluation])
 
         # save
-        self.log_pretrain['best_hidden'] = hidden
-        self.log_pretrain['best_model_params'] = self.model.state_dict()
+        self.log_integration['best_hidden'] = hidden
+        self.log_integration['best_model_params'] = self.model.state_dict()
 
     def _evaluation_train(self):
         """
-        无需model.eval
+        model.eval
         :return:
         """
         # eval prepare, forward
@@ -498,12 +498,12 @@ class Trainer(object):
         y_predict_prob_train = {name: y_predict_prob[name] for name, label in y_true_train.items()}
         y_predict_prob_test = {name: y_predict_prob[name] for name, label in y_true_test.items()}
 
-        # 不设置阈值
+        #
         y_predict_train = tensor_to_numpy({dataset_name: torch.max(label, -1)[1] for dataset_name, label in
                                            y_predict_prob_train.items()})
         y_predict_test = tensor_to_numpy({dataset_name: torch.max(label, -1)[1] for dataset_name, label in
                                           y_predict_prob_test.items()})
-        # # 设置阈值，只有概率大于0.5才确定为预测值，否则设置为unknown0
+        # #
         # unknown_num = self.adata_whole.uns['cell_type']['unknown']
         # y_predict_train = cal_pred_with_unknown(y_predict_prob_train, unknown_num)
         # y_predict_test = cal_pred_with_unknown(y_predict_prob_test, unknown_num)
@@ -520,15 +520,15 @@ class Trainer(object):
         # AMI
         test_AMI = get_ami(y_cluster, y_predict)     # TODO 训练集的ami 或者 聚类标签和预测标签的ami
 
-        # if round(sum(train_acc_list), 4) > self.log_train['best_train_acc'] or self.epoch_current_train == 0:  # 第一次进入时
+        # if round(sum(train_acc_list), 4) > self.log_train['best_train_acc'] or self.epoch_current_train == 0:  #
         if sum(test_AMI.values()) > self.log_train['best_test_AMI'] or self.epoch_current_train == 0:  # 第一次进入时
             self.log_train['best_train_acc'] = round(sum(train_acc_list), 4)
             self.log_train['best_test_acc'] = copy.deepcopy(round(sum(test_acc_list), 4))
             self.log_train['best_epoch'] = copy.deepcopy(self.epoch_current_train)
-            self.log_train['best_class'] = tensor_to_numpy(h_class)  # class作为embedding
-            self.log_train['best_hidden'] = tensor_to_numpy(h_hidden)  # h_hidden作为embedding
-            self.log_train['best_hidden_eval'] = tensor_to_numpy(h_hidden_eval)  # h_hidden作为embedding
-            self.log_train['best_model_params'] = self.model.state_dict()  # save model params
+            self.log_train['best_class'] = tensor_to_numpy(h_class)  #
+            self.log_train['best_hidden'] = tensor_to_numpy(h_hidden)  #
+            self.log_train['best_hidden_eval'] = tensor_to_numpy(h_hidden_eval)  #
+            self.log_train['best_model_params'] = self.model.state_dict()  #
             self.log_train['best_test_AMI'] = sum(test_AMI.values())  #
 
         # save evaluation
@@ -548,30 +548,30 @@ class Trainer(object):
         print(info)
         return
 
-    def _store_pretrain(self):
+    def _store_integration(self):
         # cell embedding
         cell_h_hidden = []
         for k in self.adata_whole.uns['data_order']:
-            cell_h_hidden.extend(self.log_pretrain['best_hidden'][str(k) + 'cell'])
-        self.adata_whole.obsm['cell_pretrain_hidden'] = np.array(cell_h_hidden)
+            cell_h_hidden.extend(self.log_integration['best_hidden'][str(k) + 'cell'])
+        self.adata_whole.obsm['X_CAMEX_Integration'] = np.array(cell_h_hidden)
 
-        # gene embedding，adata中不能保存，单独存放为pt文件
+        # gene embedding
         gene_embedding_dict = {}
         for name, gene_name in self.dgl_data.node_gene.items():
-            gene_embedding = self.log_pretrain['best_hidden'][name + 'gene']
+            gene_embedding = self.log_integration['best_hidden'][name + 'gene']
             gene_embedding_dict[name] = pd.DataFrame(data=gene_embedding, index=gene_name)
         import scanpy as sc
         embedding = pd.concat([v for k, v in gene_embedding_dict.items()])
-        gene_pretrain = sc.AnnData(X=embedding.to_numpy(), obs=pd.DataFrame(index=embedding.index))
-        gene_pretrain.obs.loc[:, 'batch'] = pd.concat([pd.DataFrame(len(v) * [k]) for k, v in gene_embedding_dict.items()], ignore_index=True).to_numpy()
-        gene_pretrain.obsm['X_emb'] = embedding.to_numpy()
-        gene_pretrain.write_h5ad(self.params['log_path'] + 'gene_pretrain_hidden.h5ad')
-        # torch.save(gene_embedding_dict, self.params['log_path'] + 'gene_embedding_pretrain.pt')
+        gene_integration = sc.AnnData(X=embedding.to_numpy(), obs=pd.DataFrame(index=embedding.index))
+        gene_integration.obs.loc[:, 'batch'] = pd.concat([pd.DataFrame(len(v) * [k]) for k, v in gene_embedding_dict.items()], ignore_index=True).to_numpy()
+        gene_integration.obsm['X_emb'] = embedding.to_numpy()
+        gene_integration.write_h5ad(self.params['log_path'] + 'gene_integration_hidden.h5ad')
+        # torch.save(gene_embedding_dict, self.params['log_path'] + 'gene_embedding_integration.pt')
 
         # save evaluation
-        self.log_pretrain['evaluation'].to_csv(f'{self.params["log_path"]}/evaluation_pretrain.csv', index=False)
+        self.log_integration['evaluation'].to_csv(f'{self.params["log_path"]}/evaluation_integration.csv', index=False)
         # save model_params
-        torch.save(self.log_pretrain['best_model_params'], f'{self.params["log_path"]}/model_params_pretrain.pt')
+        torch.save(self.log_integration['best_model_params'], f'{self.params["log_path"]}/model_params_integration.pt')
 
     def _store_train(self):
         # save cell embedding
@@ -582,12 +582,12 @@ class Trainer(object):
             cell_class.extend(self.log_train['best_class'][str(k) + 'cell'])
             cell_hidden.extend(self.log_train['best_hidden'][str(k) + 'cell'])
             cell_hidden_eval.extend(self.log_train['best_hidden_eval'][str(k) + 'cell'])
-        # 存到obsm中
+        #
         self.adata_whole.obsm['cell_train_class'] = np.array(cell_class)
-        self.adata_whole.obsm['cell_train_hidden'] = np.array(cell_hidden)
-        self.adata_whole.obsm['cell_train_hidden_eval'] = np.array(cell_hidden_eval)
+        self.adata_whole.obsm['X_CAMEX_Annotation'] = np.array(cell_hidden)
+        self.adata_whole.obsm['X_CAMEX_Annotation_eval'] = np.array(cell_hidden_eval)
 
-        # # 存到obs
+        # #
         # prob = nn.Softmax()(torch.tensor(self.adata_whole.obsm['cell_train_class'])).numpy()
         # prob_df = pd.DataFrame(data=prob, columns=self.adata_whole.uns['cell_type'].values())
 
@@ -624,9 +624,9 @@ class Trainer(object):
 
     def predict(self, device='cpu'):
         """
-        数据集和模型相关，所以不能解耦
-        在device cpu or gpu 预测全部的数据
-        返回值为不同层的embedding
+
+
+
         :return:
         """
         # eval prepare, forward
@@ -639,24 +639,24 @@ class Trainer(object):
 
     def get_feature_importance(self, cell_type: int = 0, device='cpu'):
         """
-        输入指定类型的细胞，如果不输入则是预测类别
-        返回对应的top k gene
+
+
         :param device:
         :param cell_type:
         :return:
         """
         # # TODO method1
-        # # 获得抽取器
+        # #
         # from torchcam.methods import GradCAM, GradCAMpp, ISCAM, LayerCAM, SSCAM, ScoreCAM, SmoothGradCAMpp, XGradCAM
         # cam_extractor = GradCAM(self.model, 'encoder')
         #
-        # # 获得预测结果，或者自己产生
+        # #
         # self.model.to(device)
         # graph_temp = self.dgl_data.graph.to(device)
         # h_class = self.model(graph_temp, graph_temp.ndata['feature'])
         # y_predict = tensor_to_numpy({dataset_name: torch.max(label, -1)[1] for dataset_name, label in h_class.items()})
         #
-        # # 看看能不能接受字典，不行就生成表达式
+        # #
         # activation_map_cam = cam_extractor(y_predict, h_class)  # TODO
         # del activation_map_cam
 
@@ -666,7 +666,7 @@ class Trainer(object):
         # cam = GradCAM(model=self.model, target_layers=target_layers, use_cuda=False)
         # from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
         # targets = [ClassifierOutputTarget(22)]
-        # # 获得预测结果，或者自己产生
+        # #
         # graph_temp = self.dgl_data.graph.to(device)
         # cam_map = cam(input_tensor=(graph_temp, graph_temp.ndata['feature']), targets=targets)[0]  # 不加平滑
 

@@ -73,9 +73,9 @@ pip install CAMEX-0.0.2.tar.gz
 ## Tutorials
 The following are detailed tutorials. All tutorials were carried out on a notebook with a 11800H cpu and a 3070 8G gpu.
 
-1. [CAMEX achieves competitive integration performance in a cross-species scenarios](./analysis/1liver/liver_analysis_UMAP_new.ipynb).
+1. [CAMEX achieves competitive integration performance in a cross-species scenarios](./analysis/1liver/1liver_analysis_UMAP_new.ipynb).
 
-2. [CAMEX uncovers the conserved differentiation process in the testis across 11 species](./analysis/2testis/1testis_analysis_UMAP_new.ipynb).
+2. [CAMEX uncovers the conserved differentiation process in the testis across 11 species](./analysis/2testis/2testis_analysis_UMAP_new.ipynb).
 
 3. [CAMEX aligns various development stages of seven organs across seven different species](./analysis/3bulk/3bulk_analysis_UMAP_new.ipynb).
 

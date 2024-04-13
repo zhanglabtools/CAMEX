@@ -255,9 +255,9 @@ class Dataset(object):
         else:
             #
             sc.pp.neighbors(dataset, use_rep='X_pca', n_pcs=n_comps, n_neighbors=n_neighbors, key_added='clust', random_state=0, metric='cosine')
-            sc.tl.leiden(dataset, resolution=0.5, neighbors_key='clust', key_added='clust_lbs')  # 如何选择res
+            sc.tl.leiden(dataset, resolution=0.5, neighbors_key='clust', key_added='clust_lbs')  #
 
-        # ，
+        #
         sc.tl.rank_genes_groups(dataset, groupby='clust_lbs', method='t-test', key_added='rank_genes_groups', pts=True)
         deg_all = pd.DataFrame(dataset.uns['rank_genes_groups']['names'])
         deg_selected = pd.unique(deg_all.iloc[0: 50, :].values.T.flatten())
@@ -406,7 +406,7 @@ class Dataset(object):
             hvg_deg_src = self.data_dict[rel_details['src']].uns['hvg_deg']  # hvg union deg
             hvg_deg_dst = self.data_dict[rel_details['dst']].uns['hvg_deg']
 
-            # 1， ，
+            # 1，
             sub_map = subset_matches(rel_details['mul_to_mul'], gene_raw_src, gene_raw_dst, union=False)
             # 2，
             sub_map = subset_matches(sub_map, hvg_deg_src, hvg_deg_dst, union=True)
@@ -481,7 +481,7 @@ class Dataset(object):
 
     def generate_index(self):
         #
-        # cell_index和gene_index
+        # cell_index and gene_index
         for name, data in self.data_dict.items():
             #
             cell_index = data.obs_names

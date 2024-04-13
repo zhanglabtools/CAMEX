@@ -31,7 +31,7 @@ def get_color(num: int, transparency=0.8):
     if num <= 0:
         raise NotImplementedError
     else:
-        # 准备10种颜色
+        # 10 kinds of colors
         color_0 = f"rgba(245,148,148, {transparency})"
         color_1 = f'rgba(241,158,102, {transparency})'
         color_2 = f'rgba(250,208,98, {transparency})'
@@ -158,9 +158,9 @@ def plot_bar_sidle(y_data, x_data, top_y):
     :param top_y:     top_labels = ['a cell', 'b cell', 'c cell', 'd cell', 'long<br>cell']
     :return:
     """
-    # 取颜色
+    #
     color_list = get_color(len(top_y))
-    # 归一化并取证
+    #
     x_data = [np.around(item / item.sum() * 100, 2) for item in x_data]
     fig = go.Figure()
 

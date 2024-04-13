@@ -41,18 +41,18 @@ class Dataset(object):
         # preprocess
         # load data
         self.data_dict, self.data_dict_whole = self.load_data()  # {dataset_name: dataset_adata}
-        # relationship
+        # get many-to-many homologous  relationship
         self.relationship_multiple = self.load_relationship()  # {relationship_name: [src, rel, dst]}
         self.relationship_single = self.load_relationship_1v1()  # pd.DataFrame
 
         # generate feature and graph
-        # feature gene for feature generation
+        # generate feature gene
         self.feature_gene, self.feature_gene_raw_1v1 = self.generate_feature_gene()
-        # node gene for graph generation
+        # generate node gene
         self.generate_node_gene()
-        # feature in data[dataset].uns[feature]
+        # generate node feature
         self.generate_feature()
-        # generate index to find gene or cell from DGL
+        # generate index to find gene or cell node from DGL
         self.generate_index()
         # generate cell label
         self.cl_cell_type = self.generate_cl_cell_type()
@@ -70,14 +70,14 @@ class Dataset(object):
 
     def load_data(self):
         """
-
+        load_data
         :return:
         """
-        #
+        # Check whether the data sets are existed and connected to each other
         self._check_dataset()
-        #
+        # get_dataset_name
         dataset_name = self._get_dataset_name()
-        #
+        # load_dataset
         dataset_dict = self._load_dataset(dataset_name)
         # preprocess including dowmsample and get balanced dataset
         dataset_dict = self._preprocess(dataset_dict, dataset_name)
@@ -85,7 +85,7 @@ class Dataset(object):
         dataset_dict = {k: self._qc_dataset(v) for k, v in dataset_dict.items()}
         # combat
         # dataset_dict = self._combat(dataset_dict)   # TODO
-        #
+        # get_describe
         self._get_describe(dataset_dict)
 
         # raw
@@ -96,7 +96,7 @@ class Dataset(object):
         return dataset_dict, dataset_dict_raw
 
     def _get_describe(self, dataset_dict):
-        #
+        # get_describe
         ref_desc = [data.uns['dataset_description'] for data in dataset_dict.values() if
                     data.uns['dataset_type'] == 'reference']
         query_desc = [data.uns['dataset_description'] for data in dataset_dict.values() if
@@ -126,8 +126,8 @@ class Dataset(object):
 
     def _check_dataset_graph(self):
         """
-
-
+        Check whether the data set is connected
+        We need to link all datasets together using many-to-many homology relationships
 
         :return:
         """
@@ -143,12 +143,12 @@ class Dataset(object):
 
     def _get_dataset_name(self):
         """
-        ，
+        get_dataset_name
         :param
         :return:
         """
         dataset_file = self.params['dataset_file']
-        # #
+        # get_dataset_name
         dataset_all = {}
         for item in dataset_file.to_numpy():
             if item[1] is True:
@@ -172,7 +172,7 @@ class Dataset(object):
         return dataset_dict
 
     def _preprocess(self, dataset_dict, dataset_name):
-        # 1，
+        # 1，balance dataset
         if self.params['get_balance'] == 'True':
             ref_names = [name for name, dataset_type in dataset_name.items() if dataset_type == 'reference']
             if len(ref_names) > 0:
@@ -182,7 +182,7 @@ class Dataset(object):
                 #
                 dataset_dict = {name: data[data.obs.loc[:, 'cell_ontology_class'].isin(ref_cell_type), :]
                                 for name, data in dataset_dict.items()}
-        # 2，downsample_counts，
+        # 2，downsample counts，
         if 0 < self.params['sample_ratio'] < 1:
             [sc.pp.downsample_counts(data, total_counts=int(self.params['sample_ratio'] * data.X.toarray().sum()),
                                      replace=True) for data in dataset_dict.values()]
@@ -219,7 +219,7 @@ class Dataset(object):
         dataset_description.columns = [f'{dataset.uns["dataset_name"]}: {dataset.uns["dataset_type"]}']
         dataset.uns['dataset_description'] = dataset_description
 
-        #
+        # whole
         dataset.uns['whole'] = dataset.copy()
 
         # normalization
@@ -228,10 +228,10 @@ class Dataset(object):
 
         # hvg
         sc.pp.highly_variable_genes(dataset, n_top_genes=2000)
-        #
+        # raw
         dataset.raw = dataset
 
-        # slice
+        # subset
         dataset = dataset[:, dataset.var['highly_variable']]
 
         # z-score
@@ -257,12 +257,12 @@ class Dataset(object):
             sc.pp.neighbors(dataset, use_rep='X_pca', n_pcs=n_comps, n_neighbors=n_neighbors, key_added='clust', random_state=0, metric='cosine')
             sc.tl.leiden(dataset, resolution=0.5, neighbors_key='clust', key_added='clust_lbs')  #
 
-        #
+        # DEG
         sc.tl.rank_genes_groups(dataset, groupby='clust_lbs', method='t-test', key_added='rank_genes_groups', pts=True)
         deg_all = pd.DataFrame(dataset.uns['rank_genes_groups']['names'])
         deg_selected = pd.unique(deg_all.iloc[0: 50, :].values.T.flatten())
 
-        #
+        # save
         dataset.uns['deg'] = deg_selected
         dataset.uns['hvg'] = dataset.var_names
         hvg_deg = np.unique(np.concatenate((dataset.var_names.to_numpy(), deg_selected)))
@@ -304,14 +304,14 @@ class Dataset(object):
         edges = dataset_file.loc[:, ['source', 'destination']].to_numpy()
         dataset_graph = nx.Graph()
         dataset_graph.add_edges_from(edges)
-        #
+        # dfs or bfs on dataset_graph, the result is oriented [(s, d), (s, d)], and merge in that order
         result = list(nx.traversal.bfs_edges(dataset_graph, list(dataset_graph.nodes)[0]))  # (graph, root)
         gene_map_1v1_list = []
         for item in result:
-            #
-            #
+            # Because dfs or bfs results are oriented, (s, d) or (d, s) are in the original data
+            # If (s, d) is in the original data
             condition1 = (dataset_file.iloc[:, 0] == item[0]) & (dataset_file.iloc[:, 3] == item[1])
-            #
+            # If (d, s) is in the original data
             condition2 = (dataset_file.iloc[:, 0] == item[1]) & (dataset_file.iloc[:, 3] == item[0])
             if len(dataset_file[condition1]) == 1:
                 # gene_map_1v1_list.extend(dataset_file[condition1].iloc[:, -1].to_numpy().tolist())    # 1v1
@@ -324,9 +324,9 @@ class Dataset(object):
                 # raise TypeError
                 continue
 
-        #
+        # load the first
         gene_map_1v1_all = self.read_csv_drop(path + gene_map_1v1_list[0])
-        #
+        # merge the rest
         for i in range(1, len(gene_map_1v1_list)):
             gene_map_1v1_all = gene_map_1v1_all.merge(self.read_csv_drop(path + gene_map_1v1_list[i]))
         return gene_map_1v1_all
@@ -343,7 +343,7 @@ class Dataset(object):
         return df
 
     def generate_feature_gene(self):
-        # feature ，
+        # feature gene is common to all datasets and is used to generate features of cells and genes
         raw_gene_list = []
         deg_list = []
         for item in self.relationship_single.columns:
@@ -356,15 +356,15 @@ class Dataset(object):
     @staticmethod
     def integrate_feature_gene(gene_map, deg_list, union: bool = False):
         """
-
+        Enter 1v1 homologous gene and deg of each dataset
         :param gene_map:
         :param deg_list:
         :param union:
         :return:
         """
         # TODO
-        # ，
-        #
+        # Enter in a certain order, or determine the name of the dataset and the name of the columns
+        # Or combine all 1v1 homologous genes into a single table
         temp = None
         cols = gene_map.columns
         for i in range(len(deg_list)):
@@ -406,14 +406,14 @@ class Dataset(object):
             hvg_deg_src = self.data_dict[rel_details['src']].uns['hvg_deg']  # hvg union deg
             hvg_deg_dst = self.data_dict[rel_details['dst']].uns['hvg_deg']
 
-            # 1，
+            # The intersection of genes in raw and homologous genes, i.e. homologous genes expressed in the data set
             sub_map = subset_matches(rel_details['mul_to_mul'], gene_raw_src, gene_raw_dst, union=False)
-            # 2，
+            # The combination of expressed homologous genes and HVG+DEG in the dataset
             sub_map = subset_matches(sub_map, hvg_deg_src, hvg_deg_dst, union=True)
             # self.node_gene_pair = sub_map
             rel_details['sub_map'] = sub_map
-            #
-            #
+            # The above results were combined with HVG+DEG, that is, some homologous genes of opposite species were mapped on the basis of DEG+HVG
+            # Submaps are obtained from many-to-many-homologous genes, and there may be duplicates in each column, namely nodes1 and nodes2, so the effect is better if they are not taken
             node_gene_src = pd.concat([sub_map.iloc[:, 0], pd.Series(hvg_deg_src)]).unique().tolist()
             node_gene_dst = pd.concat([sub_map.iloc[:, 1], pd.Series(hvg_deg_dst)]).unique().tolist()
             # node_gene_src = list(set(sub_map.iloc[:, 0]))
@@ -434,9 +434,9 @@ class Dataset(object):
         feature_dict = {name: adata_all[adata_all.obs.loc[:, 'batch'] == name, :].X.astype(np.float32)
                         for name, data in adata_dict.items()}
 
-        for item in self.feature_gene.columns:  #
+        for item in self.feature_gene.columns:  # columns are each data set
             if self.params['feature_gene'] == 'HIG':
-                #
+                # use HIG genes (DEG+HVG)
                 # feature_gene
                 gene = self.feature_gene.loc[:, item].to_numpy()
                 self.data_dict[item[: -5]].uns['feature_gene'] = gene
@@ -462,7 +462,7 @@ class Dataset(object):
                 gene_feature = np.zeros((num_gene, num_dim), dtype=np.float32)
                 self.data_dict[item[: -5]].uns[item[: -5] + 'gene'] = gene_feature
             elif self.params['feature_gene'] == 'all':
-                #
+                # use all genes
                 # feature_gene
                 gene = self.feature_gene_raw_1v1.loc[:, item].to_numpy()
                 self.data_dict[item[: -5]].uns['feature_gene'] = gene
@@ -480,17 +480,17 @@ class Dataset(object):
                 raise NotImplementedError
 
     def generate_index(self):
-        #
+        # generate node index
         # cell_index and gene_index
         for name, data in self.data_dict.items():
-            #
+            # The cell feature is generated based on data.obs_names
             cell_index = data.obs_names
             data.uns[name + 'cell_index'] = {i: cell_index[i] for i in range(len(cell_index))}
             # gene_feature
             data.uns[name + 'gene_index'] = {i: data.uns['node_gene'][i] for i in range(len(data.uns['node_gene']))}
 
     def generate_cl_cell_type(self):
-        #
+        # generate separately
         cl_cell_type_dict = {'reference': {}, 'query': {}}
         cl_cell_type_reference = []
         cl_cell_type_query = []
@@ -507,8 +507,8 @@ class Dataset(object):
         cl_cell_type_reference = np.unique(np.array(cl_cell_type_reference))
         cl_cell_type_query = np.unique(np.array(cl_cell_type_query))
 
-        #
-        #
+        # If the cell_type of query exists in reference, use reference; otherwise, set it to unknown
+        # reference comes before, query comes after. self.data_description.index is the order
         describe_dict = {item: i for i, item in enumerate(self.data_description.index)}
         cell_type_dict_reference = {item: describe_dict[item] for item in cl_cell_type_reference}
         # unknown
@@ -532,8 +532,8 @@ class Dataset(object):
         return cl_cell_type_dict
 
     def generate_cell_label(self):
-        #
-        #
+        # Convert the cell body type to numeric type
+        # stored in data.obs['cell_ontology_class_num']
         cl_cell_type_dict_all = self.cl_cell_type['cell_type_dict_all']
         for name, data in self.data_dict.items():
             data.uns['cell_label_cl'] = [cl_cell_type_dict_all[cell_type] for cell_type in
@@ -551,7 +551,7 @@ class Dataset(object):
 
     def generate_graph(self):
         """
-
+        After merging different types of graph_gene_candidate to obtain the complete graph_gene, a diagram of the cell-gene is generated
         """
         self._generate_dataset_graph()
         self._generate_relationship_graph()
@@ -596,13 +596,13 @@ class Dataset(object):
 
             # gene_homo_gene
             #
-            #
+            # src to dst
             dict_source = self.data_dict[rel_details['src']].uns['node_gene_dict']
             dict_target = self.data_dict[rel_details['dst']].uns['node_gene_dict']
 
             src = [dict_source[src_name[i]] for i in range(len(src_name))]
             dst = [dict_target[dst_name[i]] for i in range(len(dst_name))]
-            # TODO
+            # TODO directed or undirected
             data = np.ones(sub_map.shape[0], dtype=int)
             gene_homo_gene = sparse.csr_matrix((data, (src, dst)))
             # dataset_namegene homo dataset_namegene
@@ -616,7 +616,7 @@ class Dataset(object):
                 pass
 
     def generate_dgl_data(self):
-        dgl_graph = self.generate_dgl_graph()  # {rel: graph}
+        dgl_graph = self.generate_dgl_graph()  # {relationship: graph}
         data_mode = self.generate_data_mode()  #
         class_num = self.generate_class_num(data_mode)
         data_type = {name: data.uns['dataset_type'] for name, data in self.data_dict.items()}
@@ -637,7 +637,7 @@ class Dataset(object):
         return dgl_data
 
     def generate_class_num(self, data_mode):
-        #
+        # annotation
         if data_mode == 'all query':
             cluster_len_list = []
             for name, data in self.data_dict.items():
@@ -649,7 +649,7 @@ class Dataset(object):
         return class_num
 
     def generate_data_mode(self):
-        #
+        # Count the number of reference and query datasets
         mode = None
         reference = 0
         query = 0
@@ -680,7 +680,7 @@ class Dataset(object):
 
     def _generate_dgl_feature_and_label(self, dgl_graph):
         dgl_graph = dgl_graph
-        #
+        # Assign features and labels to dgl_graph
         for name, data in self.data_dict.items():
             cell = name + 'cell'
             gene = name + 'gene'
@@ -708,7 +708,7 @@ class Dataset(object):
         return dgl_graph
 
     def _generate_dgl_edge(self):
-        #
+        # Aggregates the edges in the data set and the edges in the relationship together
         graph = {}
         # data graph
         for data_name, data in self.data_dict.items():
@@ -718,14 +718,14 @@ class Dataset(object):
         for data_name, data in self.relationship_multiple.items():
             graph.update(data['graph'])
 
-        #
+        # After converting the csr sparse matrix in the graph to coo matrix, row col is turned into a tuple
         for k, v in graph.items():
             # coo
             v = v.tocoo()
             # tuple
             row = torch.from_numpy(v.row).to(torch.long)
             col = torch.from_numpy(v.col).to(torch.long)
-            #
+            # update
             graph[k] = tuple([row, col])
 
         # dgl
@@ -747,7 +747,7 @@ class Dataset(object):
         data_dict_preprocess = {}
         for name, data in data_dict_raw.items():
             adata = data.copy()
-            #
+            # Take only the genes that have been expressed
             condition_gene = adata.var_names.map(gene_convert_dict[name + '.h5ad']).notnull()
             adata = adata[:, condition_gene]
             # map
@@ -767,7 +767,7 @@ class Dataset(object):
         data_whole.uns['data_order'] = data_order
 
         # 5，add cell label
-        #
+        # mapping
         #
         data_whole.obs.loc[:, ['cell_ontology_class_num']] = data_whole.obs.loc[:, 'cell_ontology_class']. \
             map(self.cl_cell_type['cell_type_dict_all']).astype(int)

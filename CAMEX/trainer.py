@@ -108,7 +108,7 @@ class Trainer(object):
         self.model.reset_parameters()
 
     def _generate_optimizer(self):
-        #
+        # optimizer for each module
         self.optimizer_model = torch.optim.Adam(self.model.parameters(), weight_decay=0.001)
         self.optimizer_domain = torch.optim.Adam(self.domain.parameters(), weight_decay=0.001)
         self.optimizer_generator = torch.optim.Adam([{'params': self.encoder.parameters(), 'lr': 1e-3},
@@ -130,7 +130,7 @@ class Trainer(object):
         self.loss_mlp = torch.nn.MSELoss()
 
     def _batch_integration(self, graph, device, step='d'):
-        #
+        # mini batch for integration
         # to device
         self.model.to(device)
         # self.model.to_device(device)
@@ -244,7 +244,7 @@ class Trainer(object):
         return loss_total
 
     def _batch_annotation(self, graph, device, step='d'):
-        #
+        # empty_cache
         # torch.cuda.empty_cache()
         # to device
         self.model.to(device)
@@ -282,7 +282,7 @@ class Trainer(object):
         # zero_grad
         # self.optimizer_classifier.zero_grad()
         self.optimizer_classifier.zero_grad()
-        #
+        # dataset type, semi-supervised training
         data_ref = [name for name, ty in self.dgl_data.data_type.items() if ty == 'reference']
 
         # encode
@@ -336,7 +336,7 @@ class Trainer(object):
             elif self.train_mode == 'mini_batch':
                 # sampler
                 sampler_list = [3]  # TODO
-                # sampler_list = [5] * (1 + self.params['gnn_layer_num'] + 1)     #
+                # sampler_list = [5] * (1 + self.params['gnn_layer_num'] + 1)     # Take only 5 neighbors per layer
                 sampler = dgl.dataloading.ShaDowKHopSampler(sampler_list)
                 #
                 train_nids = self.dgl_data.graph.ndata['index']
@@ -400,7 +400,7 @@ class Trainer(object):
                 # sampler_list = [5] * (1 + self.params['gnn_layer_num'] + 1)     #
                 sampler = dgl.dataloading.ShaDowKHopSampler(sampler_list)
                 # t
-                data_ref = [name for name, ty in self.dgl_data.data_type.items() if ty == 'reference']
+                # data_ref = [name for name, ty in self.dgl_data.data_type.items() if ty == 'reference']
                 train_nids = self.dgl_data.graph.ndata['index']
                 # train_nids = {item + 'cell': train_nids[item + 'cell'] for item in data_ref}    # TODO
                 if len(train_nids) == 0:
@@ -422,7 +422,7 @@ class Trainer(object):
 
             # eval
             print(f'epoch: {self.epoch_current_train}, loss: {loss_sum}')
-            self._evaluation_train()
+            self._evaluation_annotation()
 
             # checkpoint
             if self.epoch_current_train - self.log_train['best_epoch'] > int(n_epoch / 10):
@@ -462,7 +462,7 @@ class Trainer(object):
         self.log_integration['best_hidden'] = hidden
         self.log_integration['best_model_params'] = self.model.state_dict()
 
-    def _evaluation_train(self):
+    def _evaluation_annotation(self):
         """
         model.eval
         :return:
@@ -498,12 +498,12 @@ class Trainer(object):
         y_predict_prob_train = {name: y_predict_prob[name] for name, label in y_true_train.items()}
         y_predict_prob_test = {name: y_predict_prob[name] for name, label in y_true_test.items()}
 
-        #
+        # without unknown
         y_predict_train = tensor_to_numpy({dataset_name: torch.max(label, -1)[1] for dataset_name, label in
                                            y_predict_prob_train.items()})
         y_predict_test = tensor_to_numpy({dataset_name: torch.max(label, -1)[1] for dataset_name, label in
                                           y_predict_prob_test.items()})
-        # #
+        # # with unknown
         # unknown_num = self.adata_whole.uns['cell_type']['unknown']
         # y_predict_train = cal_pred_with_unknown(y_predict_prob_train, unknown_num)
         # y_predict_test = cal_pred_with_unknown(y_predict_prob_test, unknown_num)
@@ -521,7 +521,7 @@ class Trainer(object):
         test_AMI = get_ami(y_cluster, y_predict)     # TODO 训练集的ami 或者 聚类标签和预测标签的ami
 
         # if round(sum(train_acc_list), 4) > self.log_train['best_train_acc'] or self.epoch_current_train == 0:  #
-        if sum(test_AMI.values()) > self.log_train['best_test_AMI'] or self.epoch_current_train == 0:  # 第一次进入时
+        if sum(test_AMI.values()) > self.log_train['best_test_AMI'] or self.epoch_current_train == 0:  # the first
             self.log_train['best_train_acc'] = round(sum(train_acc_list), 4)
             self.log_train['best_test_acc'] = copy.deepcopy(round(sum(test_acc_list), 4))
             self.log_train['best_epoch'] = copy.deepcopy(self.epoch_current_train)
@@ -582,7 +582,7 @@ class Trainer(object):
             cell_class.extend(self.log_train['best_class'][str(k) + 'cell'])
             cell_hidden.extend(self.log_train['best_hidden'][str(k) + 'cell'])
             cell_hidden_eval.extend(self.log_train['best_hidden_eval'][str(k) + 'cell'])
-        #
+        # obsm
         self.adata_whole.obsm['cell_train_class'] = np.array(cell_class)
         self.adata_whole.obsm['X_CAMEX_Annotation'] = np.array(cell_hidden)
         self.adata_whole.obsm['X_CAMEX_Annotation_eval'] = np.array(cell_hidden_eval)
@@ -624,8 +624,8 @@ class Trainer(object):
 
     def predict(self, device='cpu'):
         """
-
-
+        TODO
+        ...
 
         :return:
         """
@@ -639,8 +639,8 @@ class Trainer(object):
 
     def get_feature_importance(self, cell_type: int = 0, device='cpu'):
         """
-
-
+        TODO
+        ...
         :param device:
         :param cell_type:
         :return:

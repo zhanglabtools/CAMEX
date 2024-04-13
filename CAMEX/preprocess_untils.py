@@ -17,7 +17,7 @@ from typing import Sequence, Optional, Callable
 
 def get_file_name(path='./', file_type='.h5ad'):
     """
-
+    Checking the .h5ad file from the path
     :param path:
     :param file_type:
     :return:
@@ -34,7 +34,7 @@ def get_file_name(path='./', file_type='.h5ad'):
 
 def get_balanced_dataset(data_name_list, ref_name=None):
     """
-
+    Remove cell types that are not in the reference dataset
     :param data_name_list:
     :param ref_name:
     :return:
@@ -74,7 +74,7 @@ def preprocess(data):
 
 def get_counts_from_dataset(dataset, dataset_name):
     """
-
+    Get statistics of the dataset
     :param dataset:
     :param dataset_name:
     :return:

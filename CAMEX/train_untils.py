@@ -47,7 +47,7 @@ def subset_matches(df_match, left, right, union: bool = False):
 
 def integrate_feature_gene(gene_map, deg_list, union: bool = False):
     """
-    #
+    # Enter 1v1 homologous gene and deg of each dataset
     :param gene_map: 同源基因
     :param args: hvg, deg or hvg+deg
     :param union: True or False
@@ -55,8 +55,8 @@ def integrate_feature_gene(gene_map, deg_list, union: bool = False):
     """
 
     # TODO
-    #
-    #
+    # Enter in a certain order or determine the name of the dataset and the name of the columns
+    # Or combine all 1v1 homologous genes into one table
     temp = None
     cols = gene_map.columns
     for i in range(len(deg_list)):
@@ -189,8 +189,8 @@ def tensor_to_numpy(dict_in: dict):
 
 def cal_pred_with_unknown(y_prob: torch.tensor, unknown_num: int, threshold=0.5):
     """
-
-
+    Reject the prediction probability less than threshold and set it to unknown, accept all when threshold=0
+    When unknown is 0, the following can be used instead
     y_predict_train = tensor_to_numpy({dataset_name: torch.max(label, -1)[1] * (torch.max(label, -1)[0] > 0.5) for
                                            dataset_name, label in y_predict_prob_train.items()})
     y_predict_test = tensor_to_numpy({dataset_name: torch.max(label, -1)[1] * (torch.max(label, -1)[0] > 0.5) for

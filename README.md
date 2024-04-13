@@ -18,6 +18,9 @@ at the single cell resolution.
 
 ![](./CAMEX_overview.png)
 
+## Doc
+The latest doc can be found [here](https://camex.readthedocs.io/en/latest/index.html).
+
 ## Prerequisites
 
 ### Data
@@ -75,15 +78,15 @@ pip install CAMEX-0.0.2.tar.gz
 ## Tutorials
 The following are detailed tutorials. All tutorials were carried out on a notebook with a 11800H cpu and a 3070 8G gpu.
 
-1. [CAMEX achieves competitive integration performance in a cross-species scenarios](./analysis/1liver/1liver_analysis_UMAP_new.ipynb).
+1. [CAMEX achieves competitive integration performance in a cross-species scenarios](./analysis/1liver/Integrate_liver_across_4_species.ipynb).
 
-2. [CAMEX uncovers the conserved differentiation process in the testis across 11 species](./analysis/2testis/2testis_analysis_UMAP_new.ipynb).
+2. [CAMEX uncovers the conserved differentiation process in the testis across 11 species](./analysis/2testis/Integrate_testis_across_11_species.ipynb).
 
-3. [CAMEX aligns various development stages of seven organs across seven different species](./analysis/3bulk/3bulk_analysis_UMAP_new.ipynb).
+3. [CAMEX aligns various development stages of seven organs across seven different species](./analysis/3bulk/Integrate_RNAseq_across_11_species.ipynb).
 
-4. [CAMEX could achieve more accurate integration and annotation performance in both relatives and distant species](./analysis/4cortex_annotation/4cortex_analysis_UMAP_new.ipynb).
+4. [CAMEX could achieve more accurate integration and annotation performance in both relatives and distant species](./analysis/4cortex_annotation/integration_annotation_in_relatives_distant_species.ipynb).
 
-5. [CAMEX facilitates the discovery of new populations and markers in Primate dlPFC](./analysis/5micro_mapping/5micro_analysis_UMAP_new.ipynb).
+5. [CAMEX facilitates the discovery of new populations and markers in Primate dlPFC](./analysis/5micro_mapping/discovery_new_populations_markers.ipynb).
 
 
 ## Params details

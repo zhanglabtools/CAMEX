@@ -19,7 +19,7 @@ at the single cell resolution.
 ![](./CAMEX_overview.png)
 
 ## Doc
-The latest doc can be found [here](https://camex.readthedocs.io/en/latest/index.html).
+The latest doc can be found [here](https://camex-tutorials.readthedocs.io/en/latest/).
 
 ## Prerequisites
 

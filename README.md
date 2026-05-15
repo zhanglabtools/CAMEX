@@ -72,7 +72,7 @@ git clone https://github.com/zhanglabtools/CAMEX.git
 cd CAMEX
 python setup.py bdist_wheel sdist
 cd dist
-pip install CAMEX-0.0.2.tar.gz
+pip install camex-0.0.2.tar.gz
 ```
 
 ## Tutorials
